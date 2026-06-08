@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Status do Desenvolvimento — Site Diretiva Patrimonial</title>
+<meta name="description" content="Acompanhe o andamento do desenvolvimento do site institucional da Diretiva Patrimonial." />
+<meta property="og:title" content="Status do Desenvolvimento — Site Diretiva Patrimonial" />
+<meta property="og:description" content="Acompanhe o andamento do projeto, fase por fase." />
+<meta name="robots" content="noindex" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --navy:#0E4B83; --navy-dark:#000A32; --cyan:#2CADE2; --cyan600:#1B86B8;
+    --light:#EEF4FA; --light100:#E2ECF6; --light200:#CADCEC; --ink:#15212E; --muted:#5C6B7A; --white:#fff;
+    --amber:#B45309; --gray:#94A3B8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:"Poppins",system-ui,sans-serif;color:var(--ink);background:var(--light);line-height:1.6;}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 22px;}
+  h1,h2,h3{font-family:"Montserrat",sans-serif;letter-spacing:-.02em;line-height:1.1;}
+
+  header{background:linear-gradient(155deg,#000A32,#0E4B83 60%,#1B86B8);color:#fff;padding:3rem 0 2.4rem;}
+  .brandrow{display:flex;align-items:center;gap:1rem;margin-bottom:1.6rem;}
+  .brandrow img{height:54px;}
+  .eyebrow{text-transform:uppercase;letter-spacing:.18em;font-size:.75rem;font-weight:700;color:var(--cyan);}
+  header h1{color:#fff;font-size:clamp(1.7rem,4vw,2.6rem);margin:.5rem 0 .4rem;}
+  header p{color:rgba(255,255,255,.82);max-width:560px;}
+  .updated{margin-top:1rem;font-size:.85rem;color:rgba(255,255,255,.7);}
+
+  /* Overall progress */
+  .overall{background:#fff;border:1px solid var(--light100);border-radius:18px;padding:1.8rem;margin-top:-1.6rem;box-shadow:0 14px 40px rgba(8,30,55,.12);}
+  .overall .top{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem;}
+  .overall h2{font-size:1.15rem;color:var(--navy);}
+  .pct{font-family:"Montserrat";font-weight:800;font-size:1.6rem;color:var(--cyan600);}
+  .bar{height:14px;background:var(--light100);border-radius:99px;overflow:hidden;}
+  .bar > span{display:block;height:100%;width:20%;background:linear-gradient(90deg,var(--navy),var(--cyan));border-radius:99px;}
+  .countline{margin-top:.7rem;font-size:.9rem;color:var(--muted);}
+
+  section.phases{padding:2.6rem 0 1rem;}
+  .legend{display:flex;gap:1.2rem;flex-wrap:wrap;font-size:.82rem;color:var(--muted);margin-bottom:1.6rem;}
+  .legend span{display:inline-flex;align-items:center;gap:.4rem;}
+  .dot{width:10px;height:10px;border-radius:50%;}
+  .dot.done{background:var(--cyan);} .dot.doing{background:var(--amber);} .dot.todo{background:var(--gray);}
+
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.3rem;}
+  .card{background:#fff;border:1px solid var(--light100);border-radius:16px;padding:1.6rem;position:relative;box-shadow:0 1px 2px rgba(8,30,55,.05);transition:transform .25s,box-shadow .25s;}
+  .card:hover{transform:translateY(-4px);box-shadow:0 14px 34px rgba(8,30,55,.12);}
+  .card.done{border-top:4px solid var(--cyan);}
+  .card.doing{border-top:4px solid var(--amber);}
+  .card.todo{border-top:4px solid var(--light200);}
+  .ph{display:flex;align-items:center;gap:.7rem;margin-bottom:.5rem;}
+  .ph .num{font-family:"Montserrat";font-weight:800;font-size:1.05rem;color:var(--cyan600);background:var(--light);border-radius:8px;padding:.15rem .55rem;}
+  .ph h3{font-size:1.1rem;color:var(--navy);}
+  .badge{position:absolute;top:1.3rem;right:1.3rem;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:.28rem .7rem;border-radius:99px;}
+  .badge.done{background:#E2F4FB;color:var(--cyan600);}
+  .badge.doing{background:#FEF3E2;color:var(--amber);}
+  .badge.todo{background:#EEF2F6;color:#64748B;}
+  .card p.desc{color:var(--muted);font-size:.92rem;margin:.3rem 0 .9rem;}
+  .card ul{list-style:none;display:flex;flex-direction:column;gap:.4rem;}
+  .card li{font-size:.88rem;padding-left:1.5rem;position:relative;color:var(--ink);}
+  .card li::before{content:"";position:absolute;left:0;top:.5rem;width:8px;height:8px;border-radius:50%;background:var(--light200);}
+  .card.done li::before{background:var(--cyan);}
+
+  footer{text-align:center;padding:2.5rem 0 3rem;color:var(--muted);font-size:.85rem;}
+  footer strong{color:var(--navy);}
+
+  @media (max-width:720px){ .grid{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="brandrow">
+      <img src="assets/logo.png" alt="Diretiva Patrimonial" onerror="this.style.display='none'" />
+    </div>
+    <p class="eyebrow">Acompanhamento do projeto</p>
+    <h1>Status do Desenvolvimento — Site Diretiva Patrimonial</h1>
+    <p>Painel de progresso do site institucional, fase por fase. Esta página é atualizada conforme o projeto avança.</p>
+    <p class="updated">Última atualização: <strong>08/06/2026</strong></p>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="overall">
+    <div class="top">
+      <h2>Progresso geral</h2>
+      <span class="pct">20%</span>
+    </div>
+    <div class="bar"><span></span></div>
+    <p class="countline">1 de 5 fases concluídas · fundação do site e identidade visual da marca prontas</p>
+  </div>
+</div>
+
+<section class="phases">
+  <div class="wrap">
+    <div class="legend">
+      <span><i class="dot done"></i> Concluída</span>
+      <span><i class="dot doing"></i> Em andamento</span>
+      <span><i class="dot todo"></i> Pendente</span>
+    </div>
+
+    <div class="grid">
+
+      <article class="card done">
+        <span class="badge done">Concluída</span>
+        <div class="ph"><span class="num">F1</span><h3>Fundação</h3></div>
+        <p class="desc">Base do site e identidade visual da marca.</p>
+        <ul>
+          <li>Tema próprio com as cores e fontes da Diretiva Patrimonial</li>
+          <li>Página inicial (Home) completa, com destaque para contratos públicos</li>
+          <li>Cabeçalho, rodapé e botão de WhatsApp</li>
+        </ul>
+      </article>
+
+      <article class="card todo">
+        <span class="badge todo">Pendente</span>
+        <div class="ph"><span class="num">F2</span><h3>Páginas internas</h3></div>
+        <p class="desc">Todas as páginas institucionais do site.</p>
+        <ul>
+          <li>A Diretiva e as 6 áreas de serviço</li>
+          <li>Segmentos: setor público (licitações), privado e hospitalar</li>
+          <li>Trabalhe Conosco (formulário) e Contato</li>
+        </ul>
+      </article>
+
+      <article class="card todo">
+        <span class="badge todo">Pendente</span>
+        <div class="ph"><span class="num">F3</span><h3>Blog &amp; SEO</h3></div>
+        <p class="desc">Estrutura de blog e base técnica de SEO.</p>
+        <ul>
+          <li>Blog (artigos e categorias)</li>
+          <li>Títulos, descrições e dados estruturados</li>
+          <li>Prévia ao compartilhar e mapa do site</li>
+        </ul>
+      </article>
+
+      <article class="card todo">
+        <span class="badge todo">Pendente</span>
+        <div class="ph"><span class="num">F4</span><h3>Captação de leads</h3></div>
+        <p class="desc">Os contatos do site viram registros — não se perdem.</p>
+        <ul>
+          <li>Formulário e WhatsApp registram cada lead no painel</li>
+          <li>Trabalhe Conosco: cadastro de candidaturas</li>
+          <li>Consentimento (LGPD) guardado com data e origem</li>
+        </ul>
+      </article>
+
+      <article class="card todo">
+        <span class="badge todo">Pendente</span>
+        <div class="ph"><span class="num">F5</span><h3>Publicação &amp; SEO final</h3></div>
+        <p class="desc">Site no ar para o público — e finalização do SEO.</p>
+        <ul>
+          <li>Hospedagem + domínio oficial (HTTPS)</li>
+          <li>Finalização do SEO: Search Console e Analytics</li>
+          <li>Performance, segurança e backup</li>
+        </ul>
+      </article>
+
+    </div>
+
+    <p style="max-width:1000px;margin:1.9rem auto 0;font-size:.86rem;color:#5C6B7A;background:#F1F6FB;border:1px solid #E2ECF6;border-radius:12px;padding:14px 18px;line-height:1.55;">
+      <strong style="color:#0E4B83;">Sobre o SEO:</strong> a base técnica é construída nas fases 3 e 4, mas SEO completo é um processo. A finalização (HTTPS, Google Search Console, Analytics e Google Meu Negócio) acontece na publicação (Fase 5), e a otimização de conteúdo e autoridade é contínua. Não significa "1º lugar garantido".
+    </p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p><strong>Diretiva Patrimonial</strong> — Especialista em terceirização de profissionais para os setores público e privado.</p>
+    <p>Página de acompanhamento do desenvolvimento · atualizada periodicamente.</p>
+  </div>
+</footer>
+
+</body>
+</html>
