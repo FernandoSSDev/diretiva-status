@@ -245,10 +245,16 @@
     document.addEventListener('click', function (ev) {
       var rm = ev.target.closest && ev.target.closest('[data-remover]');
       if (rm) {
+        ev.preventDefault();
         ev.stopPropagation();
         var pid = rm.getAttribute('data-remover');
         var p = S.pessoa(pid);
-        if (p && confirm('Excluir "' + p.nome + '" da equipe?')) S.removePessoa(pid);
+        if (!p) return;
+        global.PlantaDialogo.confirmar(
+          'Excluir "' + p.nome + '" da equipe? A mesa dessa pessoa fica livre.',
+          'Excluir',
+          function () { S.removePessoa(pid); }
+        );
       }
     });
 

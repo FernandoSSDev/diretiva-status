@@ -102,6 +102,20 @@
 
 .det-acoes{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.55rem;}
 
+/* ------------------------------ diálogo ---------------------------------- */
+.dialogo{
+  /* o reset `*{margin:0}` anula o margin:auto do navegador, que é o que centraliza */
+  margin:auto;
+  border:none;border-radius:14px;padding:1.15rem 1.25rem 1rem;
+  max-width:min(30rem,calc(100vw - 2rem));
+  background:var(--white);color:var(--ink);box-shadow:var(--sombra-forte);
+}
+.dialogo::backdrop{background:rgba(8,20,34,.55);}
+.dialogo-txt{font-size:.88rem;line-height:1.55;margin-bottom:1rem;}
+.dialogo-acoes{display:flex;gap:.5rem;justify-content:flex-end;}
+.dialogo-acoes .btn{padding:.45rem .9rem;}
+.dialogo-acoes .btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;}
+
 /* ------------------------------ fantasma --------------------------------- */
 .ghost{
   position:fixed;top:0;left:0;z-index:9999;pointer-events:none;

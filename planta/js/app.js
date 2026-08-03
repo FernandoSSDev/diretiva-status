@@ -72,22 +72,24 @@
       var fr = new FileReader();
       fr.onload = function () {
         try { S.importar(fr.result); trocaPiso(pisoAtual); }
-        catch (e) { alert('Não consegui ler esse arquivo: ' + e.message); }
+        catch (e) { global.PlantaDialogo.aviso('Não consegui ler esse arquivo: ' + e.message); }
       };
       fr.readAsText(f);
       this.value = '';
     };
 
     $('bt-exemplo').onclick = function () {
-      if (S.state.pessoas.length && !confirm('Isso vai somar pessoas de exemplo à equipe atual. Continuar?')) return;
-      exemplo();
+      if (!S.state.pessoas.length) { exemplo(); return; }
+      global.PlantaDialogo.confirmar(
+        'Isso vai somar 8 pessoas de exemplo à equipe atual. Continuar?', 'Adicionar exemplo', exemplo);
     };
 
     $('bt-limpar').onclick = function () {
-      if (confirm('Apagar todos os nomes de mesa, pessoas e alocações? Não dá para desfazer.')) {
-        S.resetTudo();
-        trocaPiso(pisoAtual);
-      }
+      global.PlantaDialogo.confirmar(
+        'Apagar todos os nomes de mesa, pessoas e alocações? Não dá para desfazer.',
+        'Apagar tudo',
+        function () { S.resetTudo(); trocaPiso(pisoAtual); }
+      );
     };
   }
 

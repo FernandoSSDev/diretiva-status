@@ -154,10 +154,14 @@
     cb = callbacks || {};
 
     document.addEventListener('pointerdown', function (ev) {
-      var chip = ev.target.closest && ev.target.closest('[data-drag-pessoa]');
+      if (!ev.target.closest) return;
+      /* botões dentro do chip (excluir) não podem virar arrasto */
+      if (ev.target.closest('button')) return;
+
+      var chip = ev.target.closest('[data-drag-pessoa]');
       if (chip) { inicia(ev, chip.getAttribute('data-drag-pessoa')); return; }
 
-      var mesa = ev.target.closest && ev.target.closest('[data-desk-id]');
+      var mesa = ev.target.closest('[data-desk-id]');
       if (mesa) {
         var p = global.PlantaStore.pessoaDaMesa(mesa.getAttribute('data-desk-id'));
         if (p) inicia(ev, p.id);
