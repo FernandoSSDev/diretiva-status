@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Planta Interativa — Diretiva Patrimonial</title>
+<meta name="description" content="Planta baixa interativa dos pisos da Diretiva Patrimonial: nomeie as mesas e arraste as pessoas para simular a ocupação." />
+<meta name="robots" content="noindex" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/base.css" />
+<link rel="stylesheet" href="css/planta.css" />
+<link rel="stylesheet" href="css/painel.css" />
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-linha">
+    <div>
+      <p class="eyebrow">Ocupação de estações</p>
+      <h1>Planta Interativa — Diretiva Patrimonial</h1>
+      <p>Clique em uma mesa para dar nome a ela e arraste as pessoas da lista para simular quem senta onde. Tudo fica salvo neste navegador.</p>
+    </div>
+    <div class="marca">
+      Mesas de 1,20 × 0,60 m<br />separador de 10 cm<br />desenho em escala real
+    </div>
+  </div>
+</header>
+
+<nav class="abas" id="abas" aria-label="Ambientes"></nav>
+
+<main class="app">
+
+  <section class="cartao">
+    <div class="barra">
+      <div class="titulo">
+        <strong id="piso-nome">—</strong>
+        <span id="piso-sub">—</span>
+      </div>
+
+      <label class="chk"><input type="checkbox" id="op-cotas" checked /> Cotas</label>
+      <label class="chk"><input type="checkbox" id="op-nomes" checked /> Nomes</label>
+      <label class="chk"><input type="checkbox" id="op-mobiliario" checked /> Mobiliário</label>
+
+      <span class="sep"></span>
+      <button class="btn btn-ic" id="zoom-menos" title="Diminuir (tecla −)" aria-label="Diminuir zoom">−</button>
+      <button class="btn btn-ic" id="zoom-mais" title="Aumentar (tecla +)" aria-label="Aumentar zoom">+</button>
+      <button class="btn" id="zoom-ajustar" title="Enquadrar (tecla 0)">Ajustar</button>
+
+      <span class="sep"></span>
+      <button class="btn" id="bt-imprimir" title="Imprimir ou salvar em PDF">Imprimir</button>
+    </div>
+
+    <div class="palco" id="palco"></div>
+
+    <div class="legenda">
+      <span><i class="mesa-i"></i> Mesa 1,20 × 0,60 m</span>
+      <span><i class="sep"></i> Separador 10 cm</span>
+      <span><i class="pista"></i> Pista de circulação</span>
+      <span><i class="arm"></i> Armário</span>
+      <span><i style="background:#2CADE2"></i> Disponível</span>
+      <span><i style="background:#B45309"></i> Em ligação</span>
+      <span><i style="background:#94A3B8"></i> Ausente</span>
+    </div>
+  </section>
+
+  <aside class="lateral">
+
+    <div class="cartao bloco">
+      <h2>Detalhe da mesa</h2>
+      <div id="detalhe-mesa"></div>
+    </div>
+
+    <div class="cartao bloco">
+      <h2>Equipe</h2>
+      <form class="form-linha" id="form-pessoa">
+        <input type="text" id="novo-nome" placeholder="Nome da pessoa" maxlength="34" aria-label="Nome da pessoa" />
+        <button class="btn btn-pri" type="submit">Adicionar</button>
+      </form>
+      <input type="search" class="busca" id="busca" placeholder="Buscar por nome ou cargo…" aria-label="Buscar pessoa" />
+
+      <h2>Sem mesa <span class="cont" id="cont-sem-mesa">0</span></h2>
+      <ul class="lista dropzone" id="lista-sem-mesa" data-drop-lista></ul>
+
+      <h2 style="margin-top:.9rem;">Alocadas <span class="cont" id="cont-com-mesa">0</span></h2>
+      <ul class="lista" id="lista-com-mesa"></ul>
+    </div>
+
+    <div class="cartao bloco">
+      <h2>Resumo</h2>
+      <ul class="resumo" id="resumo"></ul>
+    </div>
+
+    <div class="cartao bloco">
+      <h2>Dados</h2>
+      <div class="det-acoes">
+        <button class="btn btn-sec" id="bt-exemplo">Carregar exemplo</button>
+        <button class="btn btn-sec" id="bt-exportar">Exportar JSON</button>
+        <button class="btn btn-sec" id="bt-importar">Importar</button>
+        <button class="btn btn-perigo" id="bt-limpar">Limpar tudo</button>
+      </div>
+      <input type="file" id="arquivo" accept="application/json,.json" hidden />
+      <p class="dica" style="margin-top:.6rem;">
+        As alterações ficam salvas automaticamente neste navegador. Use <strong>Exportar</strong>
+        para levar a configuração para outro computador.
+      </p>
+    </div>
+
+  </aside>
+</main>
+
+<footer class="rodape">
+  <p><strong>Diretiva Patrimonial</strong> — planta baixa interativa dos pisos superior e inferior.</p>
+  <p>Desenho em escala real a partir dos croquis: mesas de 1,20 × 0,60 m com separador de 10 cm.</p>
+</footer>
+
+<script src="js/data.pisos.js"></script>
+<script src="js/store.js"></script>
+<script src="js/render.plan.js"></script>
+<script src="js/dragdrop.js"></script>
+<script src="js/ui.painel.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

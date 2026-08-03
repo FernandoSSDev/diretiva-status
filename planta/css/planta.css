@@ -1,0 +1,113 @@
+/* =========================================================================
+   planta.css — aparência do desenho (SVG)
+   ========================================================================= */
+.palco{
+  position:relative;overflow:hidden;border-radius:0 0 var(--radius) var(--radius);
+  background:
+    radial-gradient(1200px 600px at 30% -10%, #F7FBFE 0%, transparent 60%),
+    repeating-linear-gradient(0deg,#F2F7FC 0 49px,#E9F1F8 49px 50px),
+    repeating-linear-gradient(90deg,#F2F7FC 0 49px,#E9F1F8 49px 50px);
+  touch-action:none;cursor:grab;
+  height:clamp(440px, calc(100vh - 236px), 940px);
+}
+.palco.pegando{cursor:grabbing;}
+.planta-svg{display:block;width:100%;height:100%;}
+@media (max-width:1080px){ .palco{height:clamp(380px, 68vh, 720px);} }
+
+/* ------------------------------ casca ----------------------------------- */
+.piso{fill:#FBFDFF;stroke:none;}
+.parede{fill:none;stroke:#0E4B83;stroke-width:15;}
+.parede-int{fill:#0E4B83;}
+.vao{fill:#FBFDFF;}
+.porta-arco{fill:none;stroke:#9DB6CC;stroke-width:2;stroke-dasharray:8 6;}
+.porta-folha{stroke:#0E4B83;stroke-width:5;stroke-linecap:round;}
+
+.sala{fill:#F1F6FB;stroke:#0E4B83;stroke-width:8;}
+.sala-nome{
+  font-family:"Montserrat",sans-serif;font-weight:800;font-size:22px;
+  fill:#0E4B83;letter-spacing:.1em;
+}
+.sala-dim{font-size:15px;fill:#7C8FA3;font-weight:500;}
+.armario-nome{font-size:13px;fill:#6B8299;font-weight:700;letter-spacing:.12em;}
+.rot-label{
+  font-family:"Montserrat",sans-serif;font-weight:800;font-size:17px;
+  fill:#1B86B8;letter-spacing:.22em;
+}
+.zona-nome{
+  font-family:"Montserrat",sans-serif;font-weight:800;font-size:19px;
+  fill:#98AEC3;letter-spacing:.16em;
+}
+.separador{fill:#8FB4D1;}
+
+/* ------------------------------ escada ---------------------------------- */
+.escada-base{fill:#EDF3F9;stroke:#0E4B83;stroke-width:4;}
+.degrau{stroke:#8FA9C0;stroke-width:2.5;}
+.escada-nome{
+  font-family:"Montserrat",sans-serif;font-weight:800;font-size:16px;
+  fill:#5F7B94;letter-spacing:.14em;
+}
+
+/* ------------------------------ cotas ----------------------------------- */
+.cotas line{stroke:#A9BDD1;stroke-width:1.6;}
+.cota-txt{font-size:14px;fill:#6E8298;font-weight:600;}
+.legenda-mini{font-size:12px;fill:#8AA0B5;font-weight:700;letter-spacing:.1em;}
+
+/* ------------------------------ mesas ----------------------------------- */
+.mesa{cursor:pointer;}
+.mesa-tampo{fill:#FFFFFF;stroke:#B9CEE1;stroke-width:2.2;}
+.mesa.ocupada .mesa-tampo{fill:#F7FBFE;stroke:#7FB4D8;stroke-width:2.6;}
+.mesa-alvo{fill:transparent;stroke:none;}
+.cadeira{fill:#DCE8F2;stroke:#A9C2D8;stroke-width:2;}
+.mesa.ocupada .cadeira{fill:#C3DCEF;stroke:#7FB4D8;}
+
+.mesa-num-bg{fill:#0E4B83;}
+.mesa.vaga .mesa-num-bg{fill:#8FA9C0;}
+.mesa-num{font-family:"Montserrat",sans-serif;font-weight:800;font-size:11px;fill:#fff;}
+.mesa-nome{font-size:10.5px;fill:#5C6B7A;font-weight:600;}
+.mesa-livre{font-size:12px;fill:#A9BDD1;font-weight:600;letter-spacing:.08em;}
+
+.avatar{stroke:#fff;stroke-width:2.5;}
+.avatar-txt{font-family:"Montserrat",sans-serif;font-weight:800;font-size:12px;fill:#fff;}
+.pessoa-nome{font-family:"Montserrat",sans-serif;font-weight:700;font-size:12.5px;fill:#15212E;}
+.pessoa-cargo{font-size:10px;fill:#7C8FA3;}
+.farol{stroke:#fff;stroke-width:2;}
+.farol.pulsa{animation:pulsa 1.25s ease-in-out infinite;transform-origin:center;transform-box:fill-box;}
+@keyframes pulsa{
+  0%,100%{opacity:1;r:6;}
+  50%{opacity:.45;r:8.5;}
+}
+
+/* estados de interação */
+.mesa:hover .mesa-tampo{stroke:#2CADE2;stroke-width:3.4;}
+.mesa:focus{outline:none;}
+.mesa:focus-visible .mesa-tampo{stroke:#0E4B83;stroke-width:4;}
+.mesa.selecionada .mesa-tampo{stroke:#0E4B83;stroke-width:4.5;fill:#EFF7FD;}
+.mesa.alvo-ativo .mesa-tampo{
+  stroke:#2CADE2;stroke-width:5;fill:#E4F4FC;filter:url(#f-alvo);
+}
+.mesa.origem-arrasto{opacity:.42;}
+
+body.arrastando .mesa .mesa-tampo{stroke-dasharray:9 6;}
+body.arrastando .palco{cursor:grabbing;}
+
+/* ------------------------------ legenda --------------------------------- */
+.legenda{
+  display:flex;flex-wrap:wrap;gap:.5rem 1.1rem;padding:.65rem .9rem;
+  border-top:1px solid var(--light100);font-size:.72rem;color:var(--muted);
+}
+.legenda span{display:inline-flex;align-items:center;gap:.35rem;}
+.legenda i{width:12px;height:12px;border-radius:3px;display:inline-block;}
+.legenda i.pista{background:repeating-linear-gradient(45deg,#A6D0E8 0 3px,#E9F4FB 3px 6px);}
+.legenda i.arm{background:#E7EEF6;border:1px solid #B9CDE0;}
+.legenda i.sep{background:#8FB4D1;}
+.legenda i.mesa-i{background:#fff;border:1.5px solid #7FB4D8;}
+
+/* ------------------------------ impressão -------------------------------- */
+@media print{
+  .topo,.abas,.lateral,.barra .btn,.barra .chk,.sep,.rodape{display:none !important;}
+  .app{display:block;padding:0;}
+  .cartao{border:none;box-shadow:none;}
+  .palco{background:#fff;overflow:visible;}
+  .planta-svg{max-height:none;}
+  .barra{border:none;}
+}
