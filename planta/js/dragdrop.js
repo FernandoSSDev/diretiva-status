@@ -125,15 +125,21 @@
   /* --------------------------- pan da planta ------------------------------ */
   function ligaPan(area) {
     var pan = null;
+    /* o navegador não deve iniciar seleção de texto nem arrasto de imagem aqui */
+    area.addEventListener('dragstart', function (ev) { ev.preventDefault(); });
+    area.addEventListener('selectstart', function (ev) { if (pan) ev.preventDefault(); });
+
     area.addEventListener('pointerdown', function (ev) {
       if (ev.target.closest && ev.target.closest('[data-desk-id]')) return;
       if (ev.button !== 0 && ev.pointerType === 'mouse') return;
+      ev.preventDefault();                 // sem isto o arrasto vira seleção
       pan = { x: ev.clientX, y: ev.clientY, moveu: false };
       area.setPointerCapture(ev.pointerId);
       area.classList.add('pegando');
     });
     area.addEventListener('pointermove', function (ev) {
       if (!pan) return;
+      ev.preventDefault();
       var k = global.PlantaRender.paraSVG(ev.clientX, ev.clientY);
       var k0 = global.PlantaRender.paraSVG(pan.x, pan.y);
       global.PlantaRender.pan(k.x - k0.x, k.y - k0.y);

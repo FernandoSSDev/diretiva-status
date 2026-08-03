@@ -9,7 +9,11 @@
     repeating-linear-gradient(90deg,#F2F7FC 0 49px,#E9F1F8 49px 50px);
   touch-action:none;cursor:grab;
   height:clamp(440px, calc(100vh - 236px), 940px);
+  /* arrastar a planta move a vista — nunca seleciona os textos do desenho */
+  user-select:none;-webkit-user-select:none;
+  -webkit-tap-highlight-color:transparent;
 }
+.palco *{user-select:none;-webkit-user-select:none;}
 .palco.pegando{cursor:grabbing;}
 .planta-svg{display:block;width:100%;height:100%;}
 @media (max-width:1080px){ .palco{height:clamp(380px, 68vh, 720px);} }
