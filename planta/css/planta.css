@@ -118,11 +118,31 @@ body.arrastando .palco{cursor:grabbing;}
 }
 
 /* ------------------------------ impressão -------------------------------- */
+.impressao-cab{display:none;}
+
 @media print{
-  .topo,.abas,.lateral,.barra .btn,.barra .chk,.sep,.rodape{display:none !important;}
+  @page{margin:12mm;}
+  .topo,.abas,.lateral,.rodape,.dialogo,
+  .barra .btn,.barra .chk,.sep{display:none !important;}
+
+  html,body{background:#fff;}
   .app{display:block;padding:0;}
   .cartao{border:none;box-shadow:none;}
-  .palco{background:#fff;overflow:visible;}
-  .planta-svg{max-height:none;}
-  .barra{border:none;}
+  .barra{border:none;padding:0 0 4mm;}
+
+  /* o palco tem altura fixa na tela; no papel ele solta e o desenho vai inteiro */
+  .palco{
+    height:auto !important;overflow:visible;background:#fff;border:none;border-radius:0;
+  }
+  .planta-svg{width:100%;height:auto;}
+
+  .impressao-cab{
+    display:block;margin-bottom:4mm;padding-bottom:2mm;
+    border-bottom:1.5px solid #0E4B83;
+  }
+  .impressao-cab strong{font-family:"Montserrat",sans-serif;font-size:12pt;color:#0E4B83;}
+  .impressao-cab span{display:block;font-size:8.5pt;color:#5C6B7A;}
+
+  .legenda{border:none;padding:3mm 0 0;font-size:8pt;break-inside:avoid;}
+  .legenda-setores{padding-bottom:1mm;}
 }

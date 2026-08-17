@@ -138,12 +138,17 @@
   /* o reset `*{margin:0}` anula o margin:auto do navegador, que é o que centraliza */
   margin:auto;
   border:none;border-radius:14px;padding:1.15rem 1.25rem 1rem;
-  max-width:min(30rem,calc(100vw - 2rem));
+  max-width:min(38rem,calc(100vw - 2rem));max-height:calc(100vh - 3rem);overflow:auto;
   background:var(--white);color:var(--ink);box-shadow:var(--sombra-forte);
 }
 .dialogo::backdrop{background:rgba(8,20,34,.55);}
 .dialogo-tit{font-size:1rem;color:var(--navy);margin-bottom:.4rem;}
 .dialogo-txt{font-size:.84rem;line-height:1.55;color:var(--muted);margin-bottom:.9rem;}
+.dialogo-html{margin-bottom:.7rem;}
+.previa-planta{
+  display:block;width:100%;height:auto;max-height:52vh;object-fit:contain;
+  background:#fff;border:1px solid var(--light200);border-radius:10px;
+}
 .dialogo-campos{margin-bottom:.4rem;}
 .dialogo-campos textarea{
   display:block;width:100%;margin-top:.18rem;padding:.5rem .6rem;

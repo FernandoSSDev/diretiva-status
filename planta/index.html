@@ -33,6 +33,8 @@
 <main class="app">
 
   <section class="cartao">
+    <div class="impressao-cab" id="impressao-cab"></div>
+
     <div class="barra">
       <div class="titulo">
         <strong id="piso-nome">—</strong>
@@ -116,7 +118,7 @@
         <button class="btn btn-sec" id="bt-importar">Importar</button>
         <button class="btn btn-perigo" id="bt-limpar">Limpar tudo</button>
       </div>
-      <input type="file" id="arquivo" accept="application/json,.json" hidden />
+      <input type="file" id="arquivo" accept=".json,.txt,application/json,text/plain" hidden />
       <p class="dica" style="margin-top:.6rem;">
         As alterações ficam salvas automaticamente neste navegador. Use <strong>Exportar</strong>
         para levar a configuração para outro computador.

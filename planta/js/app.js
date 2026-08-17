@@ -38,6 +38,7 @@
       (p.room.h / 100).toFixed(2).replace('.', ',') + ' m';
     montaAbas();
     montaLegendaSetores();
+    atualizaCabecalhoImpressao();
     var sel = P.mesaSelecionada;
     if (sel && D.pisoDaMesa(sel) && D.pisoDaMesa(sel).id === id) P.selecionar(sel);
   }
@@ -76,7 +77,7 @@
       trocaPiso(pisoAtual);
     };
 
-    $('bt-imprimir').onclick = function () { global.print(); };
+    $('bt-imprimir').onclick = imprimir;
 
     $('bt-exportar').onclick = exportar;
     $('bt-importar').onclick = importarDialogo;
@@ -111,24 +112,152 @@
   }
 
   /* --------------------------- backup ------------------------------------ */
-  /* Dentro de um iframe com sandbox o navegador ignora downloads iniciados
-     pela página e o seletor de arquivos costuma não abrir. Por isso o caminho
-     principal é copiar/colar o texto; o arquivo só aparece quando a página
-     está aberta direto no navegador, onde realmente funciona. */
+  /* Caminhos de saída, do melhor para o pior conforme o ambiente permitir:
+     salvar arquivo (capacidade "downloads" do visualizador, ou download comum
+     fora de iframe), enviar pelo compartilhamento do celular, e copiar o texto
+     — este último sempre funciona. Na entrada, abrir arquivo ou colar.
+     O seletor de arquivo funciona mesmo dentro de iframe com sandbox. */
   var pagInteira = (function () {
     try { return global.self === global.top; } catch (e) { return false; }
   })();
-  function baixaArquivo(json) {
+  var salvador = null;     // namespace da capacidade "downloads", quando houver
+
+  function detectaSalvador() {
+    if (!global.claude || typeof global.claude.use !== 'function') return;
+    try {
+      global.claude.use('downloads').then(
+        function (d) { salvador = d || null; },
+        function () { salvador = null; }
+      );
+    } catch (e) { salvador = null; }
+  }
+  function podeSalvarArquivo() { return !!salvador || pagInteira; }
+  function podeCompartilhar() { return !!(global.navigator && navigator.share); }
+  function podeColar() {
+    return !!(global.navigator && navigator.clipboard && navigator.clipboard.readText);
+  }
+  function nomeArquivo() { return 'planta-diretiva-' + hoje() + '.json'; }
+
+  function piscaBotao(botao, texto) {
+    var antes = botao.textContent;
+    botao.textContent = texto;
+    setTimeout(function () { botao.textContent = antes; }, 2600);
+  }
+
+  function salvaArquivo(json) {
+    if (salvador) {
+      salvador.save({ filename: nomeArquivo(), data: json }).then(null, function (e) {
+        if (e && e.code === 'declined') return;              // o usuário recusou
+        global.PlantaDialogo.aviso(
+          'Não consegui salvar o arquivo aqui. Use o botão Copiar e cole o texto onde ' +
+          'preferir.', 'Salvar não deu');
+      });
+      return;
+    }
     try {
       var blob = new Blob([json], { type: 'application/json' });
       var a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'planta-diretiva-' + hoje() + '.json';
+      a.download = nomeArquivo();
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
-    } catch (e) { /* bloqueado pelo sandbox — o texto acima resolve */ }
+    } catch (e) { /* sem jeito por aqui — o texto na tela resolve */ }
+  }
+
+  /* --------------------------- impressão --------------------------------- */
+  /* Dentro do visualizador, mandar imprimir a partir da página imprimiria a
+     página inteira do site que nos hospeda, não a planta. Nesse caso o
+     caminho é gerar um PNG da planta e imprimir por ele. */
+  function salvaPNG(botao) {
+    var original = botao && botao.textContent;
+    if (botao) botao.textContent = 'Gerando…';
+    R.paraPNG(2.5).then(function (blob) {
+      var nome = 'planta-' + D.piso(pisoAtual).id + '-' + hoje() + '.png';
+      if (salvador) {
+        return salvador.save({ filename: nome, data: blob }).then(function () {
+          if (botao) piscaBotao(botao, 'Salvo ✓');
+        }, function (e) {
+          if (botao) botao.textContent = original;
+          if (e && e.code === 'declined') return;
+          throw e;
+        });
+      }
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = nome;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+      if (botao) piscaBotao(botao, 'Salvo ✓');
+    }).catch(function (e) {
+      if (botao) botao.textContent = original;
+      global.PlantaDialogo.aviso('Não consegui gerar a imagem da planta. ' +
+        ((e && e.message) || ''), 'Imagem não saiu');
+    });
+  }
+
+  function atualizaCabecalhoImpressao() {
+    var cab = $('impressao-cab');
+    if (!cab) return;
+    var piso = D.piso(pisoAtual);
+    var ocup = piso.mesas.filter(function (m) { return !!S.pessoaDaMesa(m.id); }).length;
+    cab.innerHTML =
+      '<strong>Diretiva Patrimonial — ' + piso.nome + '</strong>' +
+      '<span>' + piso.subtitulo + ' · ' +
+        (piso.room.w / 100).toFixed(2).replace('.', ',') + ' × ' +
+        (piso.room.h / 100).toFixed(2).replace('.', ',') + ' m · ' +
+        ocup + ' de ' + piso.mesas.length + ' mesas ocupadas · ' +
+        'mesas de 1,20 × 0,60 m com separador de 10 cm</span>';
+  }
+
+  var temToque = (function () {
+    return ('ontouchstart' in global) || (global.navigator && navigator.maxTouchPoints > 0);
+  })();
+  var urlPrevia = null;
+
+  function imprimir() {
+    atualizaCabecalhoImpressao();
+
+    if (pagInteira) {
+      R.ajustar();                       // o papel recebe a planta enquadrada
+      setTimeout(function () { global.print(); }, 80);
+      return;
+    }
+
+    /* No visualizador, mandar imprimir daqui levaria a página inteira do site
+       hospedeiro para o papel. Então geramos a imagem e mostramos na tela: dá
+       para salvar e imprimir por ela em qualquer navegador, sem permissão. */
+    global.PlantaDialogo.pedir({
+      titulo: 'Imprimir a planta', texto: 'Gerando a imagem da planta…',
+      ok: 'Fechar', semCancelar: true
+    }, null);
+
+    R.paraPNG(2.5).then(function (blob) {
+      if (urlPrevia) URL.revokeObjectURL(urlPrevia);
+      urlPrevia = URL.createObjectURL(blob);
+      var piso = D.piso(pisoAtual);
+
+      var extras = [];
+      if (podeSalvarArquivo()) {
+        extras.push({ rotulo: 'Salvar arquivo', fn: function (v, botao) { salvaPNG(botao); } });
+      }
+
+      global.PlantaDialogo.pedir({
+        titulo: 'Planta pronta para imprimir',
+        texto: (temToque
+          ? 'Toque e segure na imagem abaixo e escolha "Salvar imagem". '
+          : 'Clique com o botão direito na imagem abaixo e escolha "Salvar imagem como…". ') +
+          'Depois é só abrir a imagem e mandar imprimir — ela sai em alta resolução, ' +
+          'com as cores dos setores, as cotas e os nomes.',
+        html: '<img class="previa-planta" src="' + urlPrevia +
+              '" alt="Planta do ' + piso.nome + '" />',
+        ok: 'Fechar', semCancelar: true, extras: extras
+      }, null);
+    }, function (e) {
+      global.PlantaDialogo.aviso('Não consegui gerar a imagem da planta. ' +
+        ((e && e.message) || ''), 'Imagem não saiu');
+    });
   }
 
   function exportar() {
@@ -137,21 +266,31 @@
       Object.keys(S.state.lotacao).length + ' mesas ocupadas · ' +
       S.setores().length + ' setores';
 
-    var extras = [{
-      rotulo: 'Copiar', fn: function (v, botao) {
-        var ok = global.PlantaDialogo.copiar(v.json, 'json');
-        botao.textContent = ok ? 'Copiado ✓' : 'Selecione e use Ctrl+C';
-        setTimeout(function () { botao.textContent = 'Copiar'; }, 2600);
-      }
-    }];
-    if (pagInteira) extras.push({ rotulo: 'Baixar .json', fn: function (v) { baixaArquivo(v.json); } });
+    var extras = [];
+    if (podeSalvarArquivo()) {
+      extras.push({ rotulo: 'Salvar arquivo', fn: function (v) { salvaArquivo(v.json); } });
+    }
+    if (podeCompartilhar()) {
+      extras.push({ rotulo: 'Enviar', fn: function (v, botao) {
+        navigator.share({ title: 'Backup da planta — Diretiva', text: v.json }).then(
+          function () { piscaBotao(botao, 'Enviado ✓'); },
+          function (e) { if (!e || e.name !== 'AbortError') piscaBotao(botao, 'Use Copiar'); }
+        );
+      } });
+    }
+    extras.push({ rotulo: 'Copiar', fn: function (v, botao) {
+      global.PlantaDialogo.copiar(v.json, 'json').then(function (ok) {
+        piscaBotao(botao, ok ? 'Copiado ✓' : 'Não deu — o texto já está selecionado');
+      });
+    } });
 
     global.PlantaDialogo.pedir({
       titulo: 'Backup dos dados',
-      texto: 'Guardado aqui: ' + resumo + '. Copie o texto abaixo e salve onde quiser ' +
-             '(bloco de notas, e-mail para você mesmo, WhatsApp). Para voltar com ele, ' +
-             'use Importar e cole.',
-      campos: [{ id: 'json', rotulo: '', tipo: 'textarea', valor: json, linhas: 9, somenteLeitura: true }],
+      texto: 'Guardado aqui: ' + resumo + '. ' + (podeSalvarArquivo()
+        ? 'Salve o arquivo — é o jeito mais simples de levar para outro aparelho. '
+        : '') + 'Você também pode copiar o texto abaixo e mandar para si mesmo. ' +
+        'Para voltar com ele, use Importar.',
+      campos: [{ id: 'json', rotulo: '', tipo: 'textarea', valor: json, linhas: 8, somenteLeitura: true }],
       ok: 'Fechar',
       semCancelar: true,
       extras: extras
@@ -171,16 +310,30 @@
   }
 
   function importarDialogo() {
+    var extras = [{
+      rotulo: 'Abrir arquivo…', fecha: true, fn: function () { $('arquivo').click(); }
+    }];
+    if (podeColar()) {
+      extras.push({ rotulo: 'Colar', fn: function (v, botao) {
+        navigator.clipboard.readText().then(function (t) {
+          var campo = document.getElementById('dlg-json');
+          if (!campo) return;
+          campo.value = t;
+          campo.classList.remove('campo-erro');
+          piscaBotao(botao, 'Colado ✓');
+        }, function () { piscaBotao(botao, 'Cole no campo abaixo'); });
+      } });
+    }
+
     global.PlantaDialogo.pedir({
       titulo: 'Restaurar backup',
-      texto: 'Cole aqui o texto que você copiou no Exportar. Isso substitui tudo que está salvo agora.',
-      campos: [{ id: 'json', rotulo: '', tipo: 'textarea', valor: '', linhas: 9,
-                 placeholder: '{ "v": 2, "setores": [ … ] }', obrigatorio: true }],
+      texto: 'Abra o arquivo do backup, ou cole no campo o texto que você copiou. ' +
+             'Isso substitui tudo que está salvo neste aparelho.',
+      campos: [{ id: 'json', rotulo: '', tipo: 'textarea', valor: '', linhas: 8,
+                 placeholder: '{"v":2,"setores":[ … ]}', obrigatorio: true }],
       ok: 'Restaurar',
       perigo: true,
-      extras: pagInteira
-        ? [{ rotulo: 'Abrir arquivo…', fecha: true, fn: function () { $('arquivo').click(); } }]
-        : []
+      extras: extras
     }, function (v) { aplicaBackup(v.json); });
   }
 
@@ -213,6 +366,7 @@
   /* ------------------------------ init ----------------------------------- */
   function init() {
     S.load();
+    detectaSalvador();
     palco = $('palco');
 
     R.montar(palco, pisoAtual);

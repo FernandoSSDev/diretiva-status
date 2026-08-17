@@ -8,7 +8,7 @@
 (function (global) {
   'use strict';
 
-  var dlg, form, elTitulo, elTexto, elCampos, elExtras, elOk, elCancelar;
+  var dlg, form, elTitulo, elTexto, elHtml, elCampos, elExtras, elOk, elCancelar;
   var aoConfirmar = null;
 
   function esc(s) {
@@ -25,6 +25,7 @@
       '<form method="dialog" novalidate>' +
         '<h3 class="dialogo-tit"></h3>' +
         '<p class="dialogo-txt"></p>' +
+        '<div class="dialogo-html"></div>' +
         '<div class="dialogo-campos"></div>' +
         '<div class="dialogo-acoes">' +
           '<span class="dialogo-extras"></span>' +
@@ -37,6 +38,7 @@
     form = dlg.querySelector('form');
     elTitulo = dlg.querySelector('.dialogo-tit');
     elTexto = dlg.querySelector('.dialogo-txt');
+    elHtml = dlg.querySelector('.dialogo-html');
     elCampos = dlg.querySelector('.dialogo-campos');
     elExtras = dlg.querySelector('.dialogo-extras');
     elOk = dlg.querySelector('[data-ok]');
@@ -101,6 +103,10 @@
     elTexto.textContent = cfg.texto || '';
     elTexto.hidden = !cfg.texto;
 
+    /* conteúdo montado por nós (prévia da planta) — nunca texto do usuário */
+    elHtml.innerHTML = cfg.html || '';
+    elHtml.hidden = !cfg.html;
+
     elCampos.innerHTML = (cfg.campos || []).map(campoHTML).join('');
     elCampos.hidden = !(cfg.campos && cfg.campos.length);
     elCampos.querySelectorAll('[data-campo]').forEach(function (c) {
@@ -125,6 +131,7 @@
     elCancelar.hidden = !!cfg.semCancelar;
     aoConfirmar = fn || null;
 
+    if (dlg.open) fecha();          // showModal() num diálogo já aberto lança erro
     if (typeof dlg.showModal === 'function') dlg.showModal();
     else dlg.setAttribute('open', '');
 
@@ -141,17 +148,29 @@
     return v;
   }
 
-  /** Copia um texto usando o caminho que estiver disponível no ambiente. */
+  /**
+   * Copia um texto pelo caminho que o ambiente permitir.
+   * Devolve uma Promise<boolean> com o resultado REAL — antes isto dizia
+   * "copiado" mesmo quando a área de transferência recusava, e a pessoa
+   * colava lixo depois.
+   */
   function copiar(texto, campoId) {
     var campo = campoId && document.getElementById('dlg-' + campoId);
-    if (campo) { campo.focus(); campo.select(); }
-    var ok = false;
-    try { ok = document.execCommand && document.execCommand('copy'); } catch (e) { ok = false; }
-    if (!ok && global.navigator && navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(texto).catch(function () { });
-      ok = true;
+    if (campo) {
+      campo.focus();
+      campo.select();
+      if (campo.setSelectionRange) campo.setSelectionRange(0, String(texto).length);
     }
-    return ok;
+    var viaExec = false;
+    try { viaExec = !!(document.execCommand && document.execCommand('copy')); }
+    catch (e) { viaExec = false; }
+    if (viaExec) return Promise.resolve(true);
+
+    if (global.navigator && navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(texto).then(
+        function () { return true; }, function () { return false; });
+    }
+    return Promise.resolve(false);
   }
 
   global.PlantaDialogo = {

@@ -41,8 +41,13 @@ Total: **47 estações**.
 - **Situação** — Disponível · **Em ligação** (farol âmbar piscando) · Ausente.
 - **Zoom e pan** — roda do mouse, botões +/− ou teclas `+`, `−`, `0`.
 - **Imprimir / PDF** — o botão Imprimir esconde a interface e imprime só a planta.
-- **Backup** — Exportar abre o conteúdo em texto para copiar; Importar aceita o
-  texto colado. Fora de um iframe aparecem também os botões de baixar/abrir `.json`.
+- **Backup** — Exportar mostra o conteúdo para copiar; Importar aceita o texto
+  colado **ou um arquivo** (`.json` ou `.txt`). A leitura tolera BOM do Bloco de
+  Notas, CRLF, espaços em volta e texto colado junto (assunto de e-mail etc.).
+- **Imprimir** — fora de iframe usa a impressão do navegador, com CSS próprio que
+  solta a altura do palco e manda o desenho inteiro para o papel. Dentro do
+  visualizador, onde a página não pode abrir a impressão, gera um PNG em alta
+  resolução e mostra na tela para salvar e imprimir por ele.
 
 Tudo é salvo automaticamente no `localStorage` do navegador — ou seja, **por
 aparelho**. O que se preenche no computador não aparece no celular; use
@@ -54,7 +59,12 @@ Quando a página roda dentro de um iframe com `sandbox` (visualizador de artifac
 embed), o navegador **bloqueia** `confirm()`, `alert()` e `prompt()`: eles voltam
 sem perguntar nada, e qualquer `if (confirm(...))` vira um botão que não faz nada.
 Downloads iniciados pela página (`<a download>`, inclusive com `blob:`) também são
-ignorados. Por isso existe o `ui.dialogo.js` e o backup por copiar/colar.
+ignorados, e `window.print()` imprimiria a página hospedeira. Por isso existe o
+`ui.dialogo.js`, o backup por copiar/colar e a prévia em PNG na própria tela.
+
+O que **funciona** dentro do sandbox e chegamos a verificar: `<input type="file">`
+abre o seletor normalmente, `document.execCommand('copy')`, `navigator.clipboard`,
+`canvas.toBlob` e `URL.createObjectURL`.
 
 ## Estrutura dos arquivos
 

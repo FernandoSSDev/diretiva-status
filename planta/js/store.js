@@ -268,12 +268,41 @@
   }
 
   /* ----------------------------- import / export -------------------------- */
-  function exportar() { return JSON.stringify(state, null, 2); }
+  /* Compacto de propósito: o backup viaja por WhatsApp/e-mail e é colado à mão. */
+  function exportar() { return JSON.stringify(state); }
+
+  /**
+   * O backup passa por bloco de notas, e-mail e WhatsApp antes de voltar.
+   * Precisa aguentar: BOM (o Bloco de Notas do Windows põe U+FEFF no começo,
+   * e isso sozinho já derruba o JSON.parse), espaços em volta, e texto extra
+   * colado junto — assunto de e-mail, aspas de citação e afins.
+   */
+  function limpaJSON(texto) {
+    var t = String(texto == null ? '' : texto).replace(/^\uFEFF/, '').trim();
+    var i = t.indexOf('{'), j = t.lastIndexOf('}');
+    if (i >= 0 && j > i) t = t.slice(i, j + 1);
+    return t;
+  }
 
   function importar(json) {
-    var novo = JSON.parse(json);
-    if (!novo || (novo.v !== 1 && novo.v !== VERSAO)) {
-      throw new Error('Arquivo em formato não reconhecido.');
+    var t = limpaJSON(json);
+    if (!t) throw new Error('Não veio nenhum texto. Cole o backup no campo ou abra o arquivo.');
+
+    var novo;
+    try {
+      novo = JSON.parse(t);
+    } catch (e) {
+      throw new Error('O texto parece incompleto. Ele precisa começar com { e terminar ' +
+        'com } — copie do começo ao fim, sem cortar nada.');
+    }
+    if (!novo || typeof novo !== 'object') {
+      throw new Error('Esse conteúdo não é um backup da planta.');
+    }
+    if (novo.v !== 1 && novo.v !== VERSAO) {
+      throw new Error('Backup de uma versão que não reconheço (v' + novo.v + ').');
+    }
+    if (!novo.mesas && !novo.pessoas) {
+      throw new Error('O backup veio sem mesas nem pessoas — deve ter sido cortado.');
     }
     state = normaliza(novo);          // v1 não tinha setores: entra com a lista padrão
     proximoSeq();

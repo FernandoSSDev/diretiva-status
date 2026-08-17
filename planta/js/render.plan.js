@@ -42,6 +42,17 @@
   function primeiro(nome) {
     return String(nome || '').trim().split(/\s+/)[0] || '';
   }
+  /** Encolhe o nome sem picotar: "Henrique Costa" vira "Henrique C.", não "Henrique C…". */
+  function nomeCurto(nome, max) {
+    var n = String(nome || '').trim();
+    if (n.length <= max) return n;
+    var p = n.split(/\s+/);
+    if (p.length > 1) {
+      var abrev = p[0] + ' ' + p[p.length - 1][0] + '.';
+      if (abrev.length <= max) return abrev;
+    }
+    return corta(p[0], max);
+  }
   function metros(cm) {
     return (cm / 100).toFixed(2).replace('.', ',') + ' m';
   }
@@ -273,13 +284,13 @@
       if (vertical) {
         el('circle', { cx: d.x + d.w / 2, cy: d.y + 52, r: 15, fill: S.corDaPessoa(p), class: 'avatar' }, gm);
         txt(gm, d.x + d.w / 2, d.y + 57, iniciais(p.nome), 'avatar-txt', 'middle');
-        txt(gm, d.x + d.w / 2, d.y + 84, corta(primeiro(p.nome), 9), 'pessoa-nome', 'middle');
-        txt(gm, d.x + d.w / 2, d.y + 98, corta(p.cargo || st.nome, 10), 'pessoa-cargo', 'middle');
+        txt(gm, d.x + d.w / 2, d.y + 84, corta(primeiro(p.nome), 8), 'pessoa-nome', 'middle');
+        txt(gm, d.x + d.w / 2, d.y + 98, corta(p.cargo || st.nome, 8), 'pessoa-cargo', 'middle');
       } else {
-        el('circle', { cx: d.x + 24, cy: d.y + 40, r: 15, fill: S.corDaPessoa(p), class: 'avatar' }, gm);
-        txt(gm, d.x + 24, d.y + 45, iniciais(p.nome), 'avatar-txt', 'middle');
-        txt(gm, d.x + 46, d.y + 38, corta(p.nome, 15), 'pessoa-nome', 'start');
-        txt(gm, d.x + 46, d.y + 51, corta(p.cargo || st.nome, 18), 'pessoa-cargo', 'start');
+        el('circle', { cx: d.x + 22, cy: d.y + 40, r: 14, fill: S.corDaPessoa(p), class: 'avatar' }, gm);
+        txt(gm, d.x + 22, d.y + 44.5, iniciais(p.nome), 'avatar-txt', 'middle');
+        txt(gm, d.x + 41, d.y + 38, nomeCurto(p.nome, 12), 'pessoa-nome', 'start');
+        txt(gm, d.x + 41, d.y + 51, corta(p.cargo || st.nome, 15), 'pessoa-cargo', 'start');
       }
       el('circle', {
         cx: d.x + d.w - 12, cy: d.y + 14, r: 6, fill: st.cor,
@@ -360,8 +371,71 @@
     return { x: (clientX - r.left) * k, y: (clientY - r.top) * k };
   }
 
+  /* ----------------------- exportação em imagem --------------------------- */
+  /* O desenho é pintado por CSS externo. Num SVG serializado essas regras não
+     viajam junto, então o traço sai preto e sem cor — por isso copiamos o
+     estilo já calculado para dentro de cada elemento antes de rasterizar. */
+  var PROPS = ['fill', 'fill-opacity', 'stroke', 'stroke-width', 'stroke-opacity',
+    'stroke-dasharray', 'stroke-linecap', 'opacity', 'font-family', 'font-size',
+    'font-weight', 'letter-spacing', 'text-anchor', 'display'];
+
+  function embuteEstilos(origem, copia) {
+    var a = origem.querySelectorAll('*'), b = copia.querySelectorAll('*');
+    for (var i = 0; i < a.length; i++) {
+      var cs = global.getComputedStyle(a[i]), decl = '';
+      for (var j = 0; j < PROPS.length; j++) {
+        var v = cs.getPropertyValue(PROPS[j]);
+        if (v) decl += PROPS[j] + ':' + v + ';';
+      }
+      b[i].setAttribute('style', decl);
+      b[i].removeAttribute('class');
+    }
+  }
+
+  /** Devolve uma Promise<Blob> com um PNG da planta inteira, sem zoom nem pan. */
+  function paraPNG(escala) {
+    escala = escala || 2;
+    var visao = { escala: view.escala, tx: view.tx, ty: view.ty };
+    ajustar();                                     // sempre a planta enquadrada
+
+    var copia = svg.cloneNode(true);
+    embuteEstilos(svg, copia);
+    copia.setAttribute('width', VW);
+    copia.setAttribute('height', VH);
+    copia.setAttribute('xmlns', NS);
+
+    var fundo = document.createElementNS(NS, 'rect');
+    fundo.setAttribute('x', 0); fundo.setAttribute('y', 0);
+    fundo.setAttribute('width', VW); fundo.setAttribute('height', VH);
+    fundo.setAttribute('fill', '#FFFFFF');
+    copia.insertBefore(fundo, copia.firstChild);
+
+    var texto = new XMLSerializer().serializeToString(copia);
+    view = visao; aplicaView();                    // devolve a vista do usuário
+
+    return new Promise(function (resolve, reject) {
+      var img = new Image();
+      img.onload = function () {
+        var cv = document.createElement('canvas');
+        cv.width = Math.round(VW * escala);
+        cv.height = Math.round(VH * escala);
+        var ctx = cv.getContext('2d');
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, cv.width, cv.height);
+        ctx.drawImage(img, 0, 0, cv.width, cv.height);
+        if (cv.toBlob) cv.toBlob(function (bl) {
+          bl ? resolve(bl) : reject(new Error('não consegui gerar a imagem'));
+        }, 'image/png');
+        else reject(new Error('este navegador não gera a imagem'));
+      };
+      img.onerror = function () { reject(new Error('não consegui desenhar a planta')); };
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(texto);
+    });
+  }
+
   global.PlantaRender = {
     montar: montar,
+    paraPNG: paraPNG,
     redesenhar: redesenhar,
     zoom: zoom,
     ajustar: ajustar,
