@@ -102,6 +102,37 @@
 
 .det-acoes{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.55rem;}
 
+/* ------------------------------ setores ---------------------------------- */
+.lista-setores{gap:.28rem;}
+.setor-item{
+  display:flex;align-items:center;gap:.45rem;padding:.22rem .3rem;
+  border:1px solid transparent;border-radius:9px;
+}
+.setor-item:hover{background:var(--light);border-color:var(--light100);}
+.setor-cor{
+  flex:0 0 auto;width:26px;height:26px;padding:0;border:1px solid var(--light200);
+  border-radius:7px;background:none;cursor:pointer;
+}
+.setor-cor::-webkit-color-swatch-wrapper{padding:2px;}
+.setor-cor::-webkit-color-swatch{border:none;border-radius:5px;}
+.setor-cor::-moz-color-swatch{border:none;border-radius:5px;}
+.setor-nome{
+  flex:1;min-width:0;padding:.24rem .4rem;font-size:.79rem;
+  border:1px solid transparent;border-radius:7px;background:transparent;color:var(--ink);
+}
+.setor-nome:hover{border-color:var(--light200);}
+.setor-nome:focus{outline:2px solid var(--cyan);outline-offset:-1px;background:var(--white);}
+.setor-uso{
+  flex:0 0 auto;min-width:22px;text-align:center;font-size:.68rem;font-weight:700;
+  color:var(--muted);background:var(--light100);border-radius:99px;padding:.06rem .38rem;
+  font-variant-numeric:tabular-nums;
+}
+#form-setor{align-items:center;}
+#novo-setor-cor{
+  flex:0 0 auto;width:34px;height:33px;padding:0;border:1px solid var(--light200);
+  border-radius:9px;background:none;cursor:pointer;
+}
+
 /* ------------------------------ diálogo ---------------------------------- */
 .dialogo{
   /* o reset `*{margin:0}` anula o margin:auto do navegador, que é o que centraliza */
@@ -111,10 +142,29 @@
   background:var(--white);color:var(--ink);box-shadow:var(--sombra-forte);
 }
 .dialogo::backdrop{background:rgba(8,20,34,.55);}
-.dialogo-txt{font-size:.88rem;line-height:1.55;margin-bottom:1rem;}
-.dialogo-acoes{display:flex;gap:.5rem;justify-content:flex-end;}
+.dialogo-tit{font-size:1rem;color:var(--navy);margin-bottom:.4rem;}
+.dialogo-txt{font-size:.84rem;line-height:1.55;color:var(--muted);margin-bottom:.9rem;}
+.dialogo-campos{margin-bottom:.4rem;}
+.dialogo-campos textarea{
+  display:block;width:100%;margin-top:.18rem;padding:.5rem .6rem;
+  border:1px solid var(--light200);border-radius:9px;background:var(--white);color:var(--ink);
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.72rem;
+  line-height:1.45;resize:vertical;
+}
+.dialogo-campos textarea:focus,
+.dialogo-campos input:focus,
+.dialogo-campos select:focus{outline:2px solid var(--cyan);outline-offset:-1px;}
+.dialogo-campos .campo-erro{border-color:#DC2626;outline-color:#DC2626;}
+.cmp-cor input{width:56px;height:34px;padding:0;border-radius:9px;cursor:pointer;}
+.dialogo-acoes{display:flex;gap:.5rem;justify-content:flex-end;align-items:center;flex-wrap:wrap;}
+.dialogo-extras{display:flex;gap:.5rem;margin-right:auto;}
 .dialogo-acoes .btn{padding:.45rem .9rem;}
 .dialogo-acoes .btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;}
+@media (max-width:520px){
+  .dialogo-extras{margin-right:0;width:100%;}
+  .dialogo-acoes{justify-content:stretch;}
+  .dialogo-acoes .btn{flex:1;justify-content:center;}
+}
 
 /* ------------------------------ fantasma --------------------------------- */
 .ghost{

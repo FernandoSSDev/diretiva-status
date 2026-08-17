@@ -3,16 +3,18 @@
    -------------------------------------------------------------------------
    Estrutura salva:
    {
-     v: 1,
-     mesas:   { "12": { nome: "Comercial 03", setor: "comercial", obs: "" } },
-     pessoas: [ { id, nome, cargo, status, cor } ],
-     lotacao: { "12": "p_3" }          // mesaId -> pessoaId
+     v: 2,
+     setores: [ { id, nome, cor } ],           // editável pelo usuário
+     mesas:   { "S12": { nome, setor, obs } },
+     pessoas: [ { id, nome, cargo, setor, status } ],
+     lotacao: { "S12": "p3" }                  // mesaId -> pessoaId
    }
    ========================================================================= */
 (function (global) {
   'use strict';
 
   var KEY = 'diretiva.planta.pisoSuperior.v1';
+  var VERSAO = 2;
 
   var STATUS = {
     disponivel: { id: 'disponivel', nome: 'Disponível', cor: '#2CADE2' },
@@ -20,46 +22,78 @@
     ausente:    { id: 'ausente',    nome: 'Ausente',    cor: '#94A3B8' }
   };
 
-  var SETORES = [
-    { id: '',           nome: '— sem setor —', cor: '#CADCEC' },
-    { id: 'comercial',  nome: 'Comercial',     cor: '#2CADE2' },
-    { id: 'operacoes',  nome: 'Operações',     cor: '#0E4B83' },
-    { id: 'rh',         nome: 'RH',            cor: '#7C3AED' },
-    { id: 'financeiro', nome: 'Financeiro',    cor: '#059669' },
-    { id: 'licitacoes', nome: 'Licitações',    cor: '#B45309' },
-    { id: 'ti',         nome: 'TI',            cor: '#DB2777' }
+  /* Semente inicial — depois disso quem manda é o usuário. */
+  var SETORES_PADRAO = [
+    { id: 'comercial',     nome: 'Comercial',     cor: '#2CADE2' },
+    { id: 'operacoes',     nome: 'Operações',     cor: '#0E4B83' },
+    { id: 'rh',            nome: 'RH',            cor: '#7C3AED' },
+    { id: 'financeiro',    nome: 'Financeiro',    cor: '#059669' },
+    { id: 'licitacoes',    nome: 'Licitações',    cor: '#B45309' },
+    { id: 'juridico',      nome: 'Jurídico',      cor: '#DB2777' },
+    { id: 'patrimonial',   nome: 'Patrimonial',   cor: '#0891B2' },
+    { id: 'contabilidade', nome: 'Contabilidade', cor: '#65A30D' },
+    { id: 'ti',            nome: 'TI',            cor: '#6366F1' }
   ];
+
+  var SEM_SETOR = { id: '', nome: '— sem setor —', cor: '#CADCEC' };
 
   var listeners = [];
   var state = null;
   var seq = 0;
 
+  /* ----------------------------- base ------------------------------------ */
+  function clonePadrao() {
+    return SETORES_PADRAO.map(function (s) { return { id: s.id, nome: s.nome, cor: s.cor }; });
+  }
   function vazio() {
-    return { v: 1, mesas: {}, pessoas: [], lotacao: {} };
+    return { v: VERSAO, setores: clonePadrao(), mesas: {}, pessoas: [], lotacao: {} };
+  }
+
+  function normaliza(bruto) {
+    var s = bruto && typeof bruto === 'object' ? bruto : {};
+    var out = {
+      v: VERSAO,
+      setores: Array.isArray(s.setores) && s.setores.length ? s.setores : clonePadrao(),
+      mesas: s.mesas && typeof s.mesas === 'object' ? s.mesas : {},
+      pessoas: Array.isArray(s.pessoas) ? s.pessoas : [],
+      lotacao: s.lotacao && typeof s.lotacao === 'object' ? s.lotacao : {}
+    };
+    /* saneia setores vindos de arquivo */
+    out.setores = out.setores
+      .filter(function (x) { return x && x.id; })
+      .map(function (x) {
+        return { id: String(x.id), nome: String(x.nome || x.id), cor: corValida(x.cor) };
+      });
+    if (!out.setores.length) out.setores = clonePadrao();
+    return out;
+  }
+
+  function corValida(c) {
+    return /^#[0-9a-fA-F]{6}$/.test(String(c || '')) ? String(c) : '#2CADE2';
+  }
+
+  function proximoSeq() {
+    seq = 0;
+    state.pessoas.forEach(function (p) {
+      var n = parseInt(String(p.id).replace(/\D/g, ''), 10);
+      if (!isNaN(n) && n > seq) seq = n;
+    });
   }
 
   function load() {
     try {
       var raw = global.localStorage.getItem(KEY);
-      state = raw ? JSON.parse(raw) : vazio();
+      state = raw ? normaliza(JSON.parse(raw)) : vazio();
     } catch (e) {
       state = vazio();
     }
-    if (!state || state.v !== 1) state = vazio();
-    state.mesas = state.mesas || {};
-    state.pessoas = state.pessoas || [];
-    state.lotacao = state.lotacao || {};
-    state.pessoas.forEach(function (p) {
-      var n = parseInt(String(p.id).replace(/\D/g, ''), 10);
-      if (!isNaN(n) && n > seq) seq = n;
-    });
+    proximoSeq();
     return state;
   }
 
   function save() {
-    try {
-      global.localStorage.setItem(KEY, JSON.stringify(state));
-    } catch (e) { /* modo privado / cota — segue sem persistir */ }
+    try { global.localStorage.setItem(KEY, JSON.stringify(state)); }
+    catch (e) { /* modo privado / cota — segue sem persistir */ }
   }
 
   function emit(motivo) {
@@ -86,23 +120,78 @@
     }
     return null;
   }
-  function pessoaDaMesa(id) {
-    return pessoa(state.lotacao[String(id)]);
-  }
+  function pessoaDaMesa(id) { return pessoa(state.lotacao[String(id)]); }
   function mesaDaPessoa(pid) {
-    for (var k in state.lotacao) {
-      if (state.lotacao[k] === pid) return k;
-    }
+    for (var k in state.lotacao) if (state.lotacao[k] === pid) return k;
     return null;
   }
   function naoAlocadas() {
     return state.pessoas.filter(function (p) { return !mesaDaPessoa(p.id); });
   }
+
+  /* ----------------------------- setores --------------------------------- */
+  function setores() { return state.setores; }
+
   function setorInfo(id) {
-    for (var i = 0; i < SETORES.length; i++) {
-      if (SETORES[i].id === (id || '')) return SETORES[i];
+    if (!id) return SEM_SETOR;
+    for (var i = 0; i < state.setores.length; i++) {
+      if (state.setores[i].id === id) return state.setores[i];
     }
-    return SETORES[0];
+    return SEM_SETOR;
+  }
+
+  /** Cor que representa a pessoa: o setor dela; se não tiver, o da mesa onde está. */
+  function corDaPessoa(p) {
+    if (!p) return SEM_SETOR.cor;
+    if (p.setor) return setorInfo(p.setor).cor;
+    var m = mesaDaPessoa(p.id);
+    return m ? setorInfo(mesa(m).setor).cor : SEM_SETOR.cor;
+  }
+
+  function slug(nome) {
+    var s = String(nome || '')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    return s || 'setor';
+  }
+
+  function idLivre(base) {
+    var id = base, n = 2;
+    while (state.setores.some(function (s) { return s.id === id; })) { id = base + '-' + n; n++; }
+    return id;
+  }
+
+  function addSetor(dados) {
+    var nome = String((dados && dados.nome) || '').trim();
+    if (!nome) return null;
+    var s = { id: idLivre(slug(nome)), nome: nome, cor: corValida(dados && dados.cor) };
+    state.setores.push(s);
+    emit('setor');
+    return s;
+  }
+
+  function setSetor(id, patch) {
+    var s = setorInfo(id);
+    if (!s.id) return;
+    if (patch.nome !== undefined) s.nome = String(patch.nome);
+    if (patch.cor !== undefined) s.cor = corValida(patch.cor);
+    emit('setor');
+  }
+
+  /** Quantas mesas e pessoas ainda apontam para este setor. */
+  function usoSetor(id) {
+    var m = 0, p = 0, k;
+    for (k in state.mesas) if (state.mesas[k].setor === id) m++;
+    state.pessoas.forEach(function (x) { if (x.setor === id) p++; });
+    return { mesas: m, pessoas: p, total: m + p };
+  }
+
+  function removeSetor(id) {
+    if (!id) return;
+    state.setores = state.setores.filter(function (s) { return s.id !== id; });
+    for (var k in state.mesas) if (state.mesas[k].setor === id) state.mesas[k].setor = '';
+    state.pessoas.forEach(function (p) { if (p.setor === id) p.setor = ''; });
+    emit('setor');
   }
 
   /* ----------------------------- mutações -------------------------------- */
@@ -115,10 +204,7 @@
   function addPessoa(dados) {
     seq += 1;
     var p = Object.assign({
-      id: 'p' + seq,
-      nome: 'Pessoa ' + seq,
-      cargo: '',
-      status: 'disponivel'
+      id: 'p' + seq, nome: 'Pessoa ' + seq, cargo: '', setor: '', status: 'disponivel'
     }, dados || {});
     state.pessoas.push(p);
     emit('pessoa');
@@ -134,9 +220,7 @@
 
   function removePessoa(pid) {
     state.pessoas = state.pessoas.filter(function (p) { return p.id !== pid; });
-    for (var k in state.lotacao) {
-      if (state.lotacao[k] === pid) delete state.lotacao[k];
-    }
+    for (var k in state.lotacao) if (state.lotacao[k] === pid) delete state.lotacao[k];
     emit('pessoa');
   }
 
@@ -145,17 +229,18 @@
     var destino = String(mesaId);
     var origem = mesaDaPessoa(pid);
     var ocupante = state.lotacao[destino];
-
     if (origem === destino) return;
 
-    if (ocupante && origem) {
-      state.lotacao[origem] = ocupante;   // troca de lugar
-    } else if (origem) {
-      delete state.lotacao[origem];
-    } else if (ocupante) {
-      delete state.lotacao[destino];      // ocupante volta para a lista
-    }
+    if (ocupante && origem) state.lotacao[origem] = ocupante;   // troca de lugar
+    else if (origem) delete state.lotacao[origem];
+    else if (ocupante) delete state.lotacao[destino];           // ocupante volta para a fila
+
     state.lotacao[destino] = pid;
+
+    /* sem setor próprio? herda o da mesa em que sentou */
+    var p = pessoa(pid);
+    if (p && !p.setor && mesa(destino).setor) p.setor = mesa(destino).setor;
+
     emit('lotacao');
   }
 
@@ -165,10 +250,7 @@
   }
 
   function limparMesa(mesaId) {
-    if (state.lotacao[String(mesaId)]) {
-      delete state.lotacao[String(mesaId)];
-      emit('lotacao');
-    }
+    if (state.lotacao[String(mesaId)]) { delete state.lotacao[String(mesaId)]; emit('lotacao'); }
   }
 
   function resetTudo() {
@@ -178,29 +260,21 @@
   }
 
   /* ----------------------------- import / export -------------------------- */
-  function exportar() {
-    return JSON.stringify(state, null, 2);
-  }
+  function exportar() { return JSON.stringify(state, null, 2); }
+
   function importar(json) {
     var novo = JSON.parse(json);
-    if (!novo || novo.v !== 1) throw new Error('Arquivo em formato não reconhecido.');
-    state = {
-      v: 1,
-      mesas: novo.mesas || {},
-      pessoas: novo.pessoas || [],
-      lotacao: novo.lotacao || {}
-    };
-    seq = 0;
-    state.pessoas.forEach(function (p) {
-      var n = parseInt(String(p.id).replace(/\D/g, ''), 10);
-      if (!isNaN(n) && n > seq) seq = n;
-    });
+    if (!novo || (novo.v !== 1 && novo.v !== VERSAO)) {
+      throw new Error('Arquivo em formato não reconhecido.');
+    }
+    state = normaliza(novo);          // v1 não tinha setores: entra com a lista padrão
+    proximoSeq();
     emit('import');
   }
 
   global.PlantaStore = {
     STATUS: STATUS,
-    SETORES: SETORES,
+    SEM_SETOR: SEM_SETOR,
     load: load,
     get state() { return state; },
     onChange: function (fn) { listeners.push(fn); },
@@ -211,7 +285,13 @@
     pessoaDaMesa: pessoaDaMesa,
     mesaDaPessoa: mesaDaPessoa,
     naoAlocadas: naoAlocadas,
+    setores: setores,
     setorInfo: setorInfo,
+    corDaPessoa: corDaPessoa,
+    addSetor: addSetor,
+    setSetor: setSetor,
+    removeSetor: removeSetor,
+    usoSetor: usoSetor,
     setMesa: setMesa,
     addPessoa: addPessoa,
     setPessoa: setPessoa,

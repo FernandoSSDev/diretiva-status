@@ -262,12 +262,12 @@
     if (p) {
       var st = S.STATUS[p.status] || S.STATUS.disponivel;
       if (vertical) {
-        el('circle', { cx: d.x + d.w / 2, cy: d.y + 52, r: 15, fill: setor.cor, class: 'avatar' }, gm);
+        el('circle', { cx: d.x + d.w / 2, cy: d.y + 52, r: 15, fill: S.corDaPessoa(p), class: 'avatar' }, gm);
         txt(gm, d.x + d.w / 2, d.y + 57, iniciais(p.nome), 'avatar-txt', 'middle');
         txt(gm, d.x + d.w / 2, d.y + 84, corta(primeiro(p.nome), 9), 'pessoa-nome', 'middle');
         txt(gm, d.x + d.w / 2, d.y + 98, corta(p.cargo || st.nome, 10), 'pessoa-cargo', 'middle');
       } else {
-        el('circle', { cx: d.x + 24, cy: d.y + 40, r: 15, fill: setor.cor, class: 'avatar' }, gm);
+        el('circle', { cx: d.x + 24, cy: d.y + 40, r: 15, fill: S.corDaPessoa(p), class: 'avatar' }, gm);
         txt(gm, d.x + 24, d.y + 45, iniciais(p.nome), 'avatar-txt', 'middle');
         txt(gm, d.x + 46, d.y + 38, corta(p.nome, 15), 'pessoa-nome', 'start');
         txt(gm, d.x + 46, d.y + 51, corta(p.cargo || st.nome, 18), 'pessoa-cargo', 'start');

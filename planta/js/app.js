@@ -56,26 +56,15 @@
 
     $('bt-imprimir').onclick = function () { global.print(); };
 
-    $('bt-exportar').onclick = function () {
-      var blob = new Blob([S.exportar()], { type: 'application/json' });
-      var a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'planta-diretiva-' + hoje() + '.json';
-      a.click();
-      setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
-    };
-
-    $('bt-importar').onclick = function () { $('arquivo').click(); };
+    $('bt-exportar').onclick = exportar;
+    $('bt-importar').onclick = importarDialogo;
     $('arquivo').onchange = function () {
       var f = this.files && this.files[0];
+      this.value = '';
       if (!f) return;
       var fr = new FileReader();
-      fr.onload = function () {
-        try { S.importar(fr.result); trocaPiso(pisoAtual); }
-        catch (e) { global.PlantaDialogo.aviso('Não consegui ler esse arquivo: ' + e.message); }
-      };
+      fr.onload = function () { aplicaBackup(fr.result); };
       fr.readAsText(f);
-      this.value = '';
     };
 
     $('bt-exemplo').onclick = function () {
@@ -97,6 +86,80 @@
     var d = new Date();
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' +
       String(d.getDate()).padStart(2, '0');
+  }
+
+  /* --------------------------- backup ------------------------------------ */
+  /* Dentro de um iframe com sandbox o navegador ignora downloads iniciados
+     pela página e o seletor de arquivos costuma não abrir. Por isso o caminho
+     principal é copiar/colar o texto; o arquivo só aparece quando a página
+     está aberta direto no navegador, onde realmente funciona. */
+  var pagInteira = (function () {
+    try { return global.self === global.top; } catch (e) { return false; }
+  })();
+  function baixaArquivo(json) {
+    try {
+      var blob = new Blob([json], { type: 'application/json' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'planta-diretiva-' + hoje() + '.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+    } catch (e) { /* bloqueado pelo sandbox — o texto acima resolve */ }
+  }
+
+  function exportar() {
+    var json = S.exportar();
+    var resumo = S.state.pessoas.length + ' pessoas · ' +
+      Object.keys(S.state.lotacao).length + ' mesas ocupadas · ' +
+      S.setores().length + ' setores';
+
+    var extras = [{
+      rotulo: 'Copiar', fn: function (v, botao) {
+        var ok = global.PlantaDialogo.copiar(v.json, 'json');
+        botao.textContent = ok ? 'Copiado ✓' : 'Selecione e use Ctrl+C';
+        setTimeout(function () { botao.textContent = 'Copiar'; }, 2600);
+      }
+    }];
+    if (pagInteira) extras.push({ rotulo: 'Baixar .json', fn: function (v) { baixaArquivo(v.json); } });
+
+    global.PlantaDialogo.pedir({
+      titulo: 'Backup dos dados',
+      texto: 'Guardado aqui: ' + resumo + '. Copie o texto abaixo e salve onde quiser ' +
+             '(bloco de notas, e-mail para você mesmo, WhatsApp). Para voltar com ele, ' +
+             'use Importar e cole.',
+      campos: [{ id: 'json', rotulo: '', tipo: 'textarea', valor: json, linhas: 9, somenteLeitura: true }],
+      ok: 'Fechar',
+      semCancelar: true,
+      extras: extras
+    }, null);
+  }
+
+  function aplicaBackup(texto) {
+    try {
+      S.importar(texto);
+      trocaPiso(pisoAtual);
+      global.PlantaDialogo.aviso(
+        'Backup restaurado: ' + S.state.pessoas.length + ' pessoas e ' +
+        Object.keys(S.state.lotacao).length + ' mesas ocupadas.', 'Pronto');
+    } catch (e) {
+      global.PlantaDialogo.aviso('Não consegui ler esse backup. ' + e.message, 'Deu ruim');
+    }
+  }
+
+  function importarDialogo() {
+    global.PlantaDialogo.pedir({
+      titulo: 'Restaurar backup',
+      texto: 'Cole aqui o texto que você copiou no Exportar. Isso substitui tudo que está salvo agora.',
+      campos: [{ id: 'json', rotulo: '', tipo: 'textarea', valor: '', linhas: 9,
+                 placeholder: '{ "v": 2, "setores": [ … ] }', obrigatorio: true }],
+      ok: 'Restaurar',
+      perigo: true,
+      extras: pagInteira
+        ? [{ rotulo: 'Abrir arquivo…', fecha: true, fn: function () { $('arquivo').click(); } }]
+        : []
+    }, function (v) { aplicaBackup(v.json); });
   }
 
   /* ------------------------------ exemplo -------------------------------- */
@@ -132,6 +195,7 @@
 
     R.montar(palco, pisoAtual);
     P.init();
+    global.PlantaSetores.init();
     montaAbas();
     montaBarra();
     trocaPiso(pisoAtual);
@@ -139,7 +203,8 @@
     global.PlantaDrag.init({
       onSolta: function (pid, mesaId) { S.alocar(pid, mesaId); P.selecionar(mesaId); },
       onRemove: function (pid) { S.desalocar(pid); },
-      onClicarMesa: function (id) { P.selecionar(id); }
+      onClicarMesa: function (id) { P.selecionar(id); },
+      onClicarPessoa: function (pid) { P.editarPessoa(pid); }
     });
     global.PlantaDrag.ligaPan(palco);
 

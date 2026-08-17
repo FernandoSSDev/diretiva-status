@@ -88,6 +88,20 @@
     </div>
 
     <div class="cartao bloco">
+      <h2>Setores</h2>
+      <form class="form-linha" id="form-setor">
+        <input type="color" id="novo-setor-cor" value="#2CADE2" aria-label="Cor do novo setor" />
+        <input type="text" id="novo-setor-nome" placeholder="Novo setor" maxlength="24" aria-label="Nome do novo setor" />
+        <button class="btn btn-pri" type="submit">Criar</button>
+      </form>
+      <ul class="lista lista-setores" id="lista-setores"></ul>
+      <p class="dica" style="margin-top:.55rem;">
+        Clique no quadrado para trocar a cor e no nome para renomear. O número à direita
+        mostra quantas mesas e pessoas usam o setor.
+      </p>
+    </div>
+
+    <div class="cartao bloco">
       <h2>Resumo</h2>
       <ul class="resumo" id="resumo"></ul>
     </div>
@@ -120,6 +134,7 @@
 <script src="js/render.plan.js"></script>
 <script src="js/dragdrop.js"></script>
 <script src="js/ui.dialogo.js"></script>
+<script src="js/ui.setores.js"></script>
 <script src="js/ui.painel.js"></script>
 <script src="js/app.js"></script>
 </body>

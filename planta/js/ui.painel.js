@@ -36,6 +36,7 @@
 
   /* ======================= lista de pessoas =============================== */
   function chip(p, alocada) {
+    var cor = S.corDaPessoa(p);
     var setor = S.setorInfo(p.setor);
     var st = S.STATUS[p.status] || S.STATUS.disponivel;
     var mesaId = S.mesaDaPessoa(p.id);
@@ -47,8 +48,8 @@
     }
     return '' +
       '<li class="chip' + (alocada ? ' chip-alocada' : '') + '" data-drag-pessoa="' + p.id + '" ' +
-      'data-pessoa="' + p.id + '" title="Arraste para uma mesa">' +
-        '<span class="chip-av" style="background:' + setor.cor + '">' + esc(iniciais(p.nome)) + '</span>' +
+      'data-pessoa="' + p.id + '" title="Arraste para uma mesa · clique para editar">' +
+        '<span class="chip-av" style="background:' + cor + '">' + esc(iniciais(p.nome)) + '</span>' +
         '<span class="chip-txt">' +
           '<strong>' + esc(p.nome) + '</strong>' +
           '<em>' + esc(p.cargo || setor.nome) + '</em>' + onde +
@@ -110,11 +111,33 @@
   }
 
   /* ======================= detalhe da mesa ================================ */
+  var NOVO = '__novo__';
+
   function opcoesSetor(sel) {
-    return S.SETORES.map(function (s) {
-      return '<option value="' + s.id + '"' + (s.id === (sel || '') ? ' selected' : '') + '>' +
+    var vazio = '<option value=""' + (!sel ? ' selected' : '') + '>' +
+      esc(S.SEM_SETOR.nome) + '</option>';
+    var itens = S.setores().map(function (s) {
+      return '<option value="' + esc(s.id) + '"' + (s.id === (sel || '') ? ' selected' : '') + '>' +
         esc(s.nome) + '</option>';
     }).join('');
+    return vazio + itens + '<option value="' + NOVO + '">＋ Criar setor…</option>';
+  }
+
+  /** Abre o diálogo de novo setor e devolve o id criado para quem pediu. */
+  function criarSetor(aoCriar) {
+    global.PlantaDialogo.pedir({
+      titulo: 'Novo setor',
+      campos: [
+        { id: 'nome', rotulo: 'Nome do setor', tipo: 'text', valor: '',
+          maxlength: 24, obrigatorio: true, placeholder: 'ex.: Recepção' },
+        { id: 'cor', rotulo: 'Cor', tipo: 'color',
+          valor: global.PlantaSetores ? global.PlantaSetores.corSugerida() : '#2CADE2' }
+      ],
+      ok: 'Criar setor'
+    }, function (v) {
+      var s = S.addSetor({ nome: v.nome, cor: v.cor });
+      if (s && aoCriar) aoCriar(s);
+    });
   }
   function opcoesStatus(sel) {
     return Object.keys(S.STATUS).map(function (k) {
@@ -158,7 +181,7 @@
           esc(S.rotuloPadrao(mesaSelecionada)) + '" value="' + esc(meta.nome || '') + '" />' +
       '</label>' +
 
-      '<label class="cmp">Setor' +
+      '<label class="cmp">Setor da mesa' +
         '<select id="f-setor">' + opcoesSetor(meta.setor) + '</select>' +
       '</label>' +
 
@@ -170,7 +193,9 @@
         '<select id="f-status">' + opcoesStatus(p.status) + '</select></label>' +
         '<label class="cmp">Cargo / função' +
         '<input id="f-cargo" type="text" maxlength="24" value="' + esc(p.cargo || '') + '" ' +
-        'placeholder="ex.: Analista" /></label>' : '') +
+        'placeholder="ex.: Analista" /></label>' +
+        '<label class="cmp">Setor de ' + esc(p.nome.split(' ')[0]) +
+        '<select id="f-setor-pessoa">' + opcoesSetor(p.setor) + '</select></label>' : '') +
 
       '<label class="cmp">Observação' +
         '<input id="f-obs" type="text" maxlength="60" value="' + esc(meta.obs || '') + '" ' +
@@ -184,7 +209,23 @@
 
     $('det-fechar').onclick = function () { selecionar(null); };
     $('f-nome').oninput = digitando(function () { S.setMesa(mesaSelecionada, { nome: this.value }); });
-    $('f-setor').onchange = function () { S.setMesa(mesaSelecionada, { setor: this.value }); };
+    $('f-setor').onchange = function () {
+      var alvo = mesaSelecionada;
+      if (this.value === NOVO) {
+        this.value = S.mesa(alvo).setor || '';
+        criarSetor(function (s) { S.setMesa(alvo, { setor: s.id }); });
+        return;
+      }
+      S.setMesa(alvo, { setor: this.value });
+    };
+    if ($('f-setor-pessoa')) $('f-setor-pessoa').onchange = function () {
+      if (this.value === NOVO) {
+        this.value = p.setor || '';
+        criarSetor(function (s) { S.setPessoa(p.id, { setor: s.id }); });
+        return;
+      }
+      S.setPessoa(p.id, { setor: this.value });
+    };
     $('f-obs').oninput = digitando(function () { S.setMesa(mesaSelecionada, { obs: this.value }); });
     $('f-pessoa').onchange = function () {
       if (this.value) S.alocar(this.value, mesaSelecionada);
@@ -198,6 +239,33 @@
       S.alocar(nova.id, mesaSelecionada);
       setTimeout(function () { var i = $('f-cargo'); if (i) i.focus(); }, 30);
     };
+  }
+
+  /* ======================= editar pessoa ================================= */
+  function editarPessoa(pid) {
+    var p = S.pessoa(pid);
+    if (!p) return;
+    var setores = [{ valor: '', rotulo: S.SEM_SETOR.nome }].concat(
+      S.setores().map(function (s) { return { valor: s.id, rotulo: s.nome }; }));
+    var status = Object.keys(S.STATUS).map(function (k) {
+      return { valor: k, rotulo: S.STATUS[k].nome };
+    });
+
+    global.PlantaDialogo.pedir({
+      titulo: 'Editar pessoa',
+      campos: [
+        { id: 'nome', rotulo: 'Nome', tipo: 'text', valor: p.nome, maxlength: 34, obrigatorio: true },
+        { id: 'cargo', rotulo: 'Cargo / função', tipo: 'text', valor: p.cargo || '',
+          maxlength: 24, placeholder: 'ex.: Analista' },
+        { id: 'setor', rotulo: 'Setor', tipo: 'select', valor: p.setor || '', opcoes: setores },
+        { id: 'status', rotulo: 'Situação', tipo: 'select', valor: p.status, opcoes: status }
+      ],
+      ok: 'Salvar'
+    }, function (v) {
+      S.setPessoa(pid, {
+        nome: v.nome.trim(), cargo: v.cargo.trim(), setor: v.setor, status: v.status
+      });
+    });
   }
 
   function selecionar(id) {
@@ -277,6 +345,8 @@
   global.PlantaPainel = {
     init: init,
     selecionar: selecionar,
+    editarPessoa: editarPessoa,
+    criarSetor: criarSetor,
     atualizar: function () { renderEquipe(); renderResumo(); renderMesa(); },
     get mesaSelecionada() { return mesaSelecionada; }
   };

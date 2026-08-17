@@ -177,8 +177,16 @@
     /* clique (sem arrasto) abre o painel da mesa */
     document.addEventListener('click', function (ev) {
       if (suprimirClique) { suprimirClique = false; return; }
-      var mesa = ev.target.closest && ev.target.closest('[data-desk-id]');
-      if (mesa && cb.onClicarMesa) cb.onClicarMesa(mesa.getAttribute('data-desk-id'));
+      if (!ev.target.closest) return;
+
+      var mesa = ev.target.closest('[data-desk-id]');
+      if (mesa && cb.onClicarMesa) { cb.onClicarMesa(mesa.getAttribute('data-desk-id')); return; }
+
+      /* clique no chip abre a edição — menos nos botões dele (excluir) */
+      var chip = ev.target.closest('[data-drag-pessoa]');
+      if (chip && !ev.target.closest('button') && cb.onClicarPessoa) {
+        cb.onClicarPessoa(chip.getAttribute('data-drag-pessoa'));
+      }
     }, true);
 
     /* teclado: Enter/Espaço na mesa */
