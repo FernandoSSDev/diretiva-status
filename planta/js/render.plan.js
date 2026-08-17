@@ -209,12 +209,15 @@
   }
 
   /* --------------------------- mesas ------------------------------------- */
-  function cadeira(g, d) {
+  /** A cadeira herda a cor do setor DA MESA — é o que marca a área no desenho. */
+  function cadeira(g, d, cor) {
     var cx = d.x + d.w / 2, cy = d.y + d.h / 2, a = { class: 'cadeira', rx: 8 };
     if (d.face === 'up')    { a.x = cx - 23; a.y = d.y - 31;      a.width = 46; a.height = 25; }
     if (d.face === 'down')  { a.x = cx - 23; a.y = d.y + d.h + 6; a.width = 46; a.height = 25; }
     if (d.face === 'left')  { a.x = d.x - 31; a.y = cy - 23;      a.width = 25; a.height = 46; }
     if (d.face === 'right') { a.x = d.x + d.w + 6; a.y = cy - 23; a.width = 25; a.height = 46; }
+    /* precisa ser style inline: atributo de apresentação perde para o .cadeira do CSS */
+    if (cor) a.style = 'fill:' + cor + ';fill-opacity:.5;stroke:' + cor + ';stroke-opacity:.9';
     el('rect', a, g);
   }
 
@@ -232,20 +235,26 @@
       'aria-label': S.nomeMesa(d.id) + (p ? ' — ' + p.nome : ' — livre')
     }, g);
 
-    cadeira(gm, d);
+    cadeira(gm, d, meta.setor ? setor.cor : null);
     el('rect', {
       x: d.x, y: d.y, width: d.w, height: d.h, rx: 4, class: 'mesa-tampo', filter: 'url(#f-mesa)'
     }, gm);
-    el('rect', {
-      x: d.x, y: d.y, width: d.w, height: d.h, rx: 4, class: 'mesa-alvo'
-    }, gm);
 
+    /* A área do setor é fixa: fica na mesa, não em quem senta nela. */
     if (meta.setor) {
       el('rect', {
-        x: d.x, y: d.y, width: vertical ? d.w : 6, height: vertical ? 6 : d.h,
+        x: d.x, y: d.y, width: d.w, height: d.h, rx: 4,
+        fill: setor.cor, opacity: '.13', class: 'mesa-tinta'
+      }, gm);
+      el('rect', {
+        x: d.x, y: d.y, width: vertical ? d.w : 7, height: vertical ? 7 : d.h,
         rx: 3, fill: setor.cor
       }, gm);
     }
+
+    el('rect', {
+      x: d.x, y: d.y, width: d.w, height: d.h, rx: 4, class: 'mesa-alvo'
+    }, gm);
 
     /* número */
     el('rect', {

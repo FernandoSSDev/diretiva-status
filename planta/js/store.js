@@ -140,12 +140,24 @@
     return SEM_SETOR;
   }
 
-  /** Cor que representa a pessoa: o setor dela; se não tiver, o da mesa onde está. */
+  /**
+   * Cor que representa a pessoa.
+   * O setor é do LUGAR, não de quem senta nele: quem está numa mesa assume a
+   * cor daquela mesa. O setor próprio da pessoa só vale enquanto ela está na
+   * fila, sem mesa — serve para marcar de onde ela vem.
+   */
   function corDaPessoa(p) {
     if (!p) return SEM_SETOR.cor;
-    if (p.setor) return setorInfo(p.setor).cor;
     var m = mesaDaPessoa(p.id);
-    return m ? setorInfo(mesa(m).setor).cor : SEM_SETOR.cor;
+    if (m) return setorInfo(mesa(m).setor).cor;
+    return p.setor ? setorInfo(p.setor).cor : SEM_SETOR.cor;
+  }
+
+  /** Setor efetivo da pessoa: o da mesa onde ela está; se estiver na fila, o dela. */
+  function setorDaPessoa(p) {
+    if (!p) return SEM_SETOR;
+    var m = mesaDaPessoa(p.id);
+    return m ? setorInfo(mesa(m).setor) : setorInfo(p.setor);
   }
 
   function slug(nome) {
@@ -236,11 +248,7 @@
     else if (ocupante) delete state.lotacao[destino];           // ocupante volta para a fila
 
     state.lotacao[destino] = pid;
-
-    /* sem setor próprio? herda o da mesa em que sentou */
-    var p = pessoa(pid);
-    if (p && !p.setor && mesa(destino).setor) p.setor = mesa(destino).setor;
-
+    /* nada de herdar setor: o setor é da mesa e fica onde está */
     emit('lotacao');
   }
 
@@ -288,6 +296,7 @@
     setores: setores,
     setorInfo: setorInfo,
     corDaPessoa: corDaPessoa,
+    setorDaPessoa: setorDaPessoa,
     addSetor: addSetor,
     setSetor: setSetor,
     removeSetor: removeSetor,

@@ -28,6 +28,12 @@ Total: **47 estações**.
   O número ao lado de cada um mostra quantas mesas e pessoas o usam; ao excluir,
   quem apontava para ele volta a ficar sem setor. Dá para criar um setor novo sem
   sair do painel da mesa, pela opção "＋ Criar setor…" do seletor.
+- **O setor é do lugar, não da pessoa** — ele fica na mesa (tampo tingido, faixa
+  lateral e cadeira na cor). Quem senta ali assume a cor daquela área; ao mudar de
+  mesa, assume a cor da nova. A área em si nunca se move. O "setor de origem" da
+  pessoa só colore o chip enquanto ela está na fila, sem mesa.
+- **Legenda de áreas** — logo abaixo da planta, com os setores presentes naquele
+  ambiente e quantas mesas cada um ocupa.
 - **Arrastar pessoas** — segure um nome na lista lateral e solte em cima da mesa.
   Arrastar de uma mesa para outra **troca** os dois ocupantes. Arrastar de volta
   para a lista "Sem mesa" libera a estação.

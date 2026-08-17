@@ -106,6 +106,17 @@ body.arrastando .palco{cursor:grabbing;}
 .legenda i.sep{background:#8FB4D1;}
 .legenda i.mesa-i{background:#fff;border:1.5px solid #7FB4D8;}
 
+.legenda-setores{padding-bottom:.15rem;}
+.legenda-setores .legenda-tit{
+  font-weight:700;color:var(--navy);text-transform:uppercase;
+  letter-spacing:.1em;font-size:.66rem;
+}
+.legenda-setores i{border-radius:4px;}
+.legenda-setores b{
+  font-variant-numeric:tabular-nums;color:var(--navy);
+  background:var(--light);border-radius:99px;padding:0 .35rem;font-size:.66rem;
+}
+
 /* ------------------------------ impressão -------------------------------- */
 @media print{
   .topo,.abas,.lateral,.barra .btn,.barra .chk,.sep,.rodape{display:none !important;}

@@ -37,7 +37,7 @@
   /* ======================= lista de pessoas =============================== */
   function chip(p, alocada) {
     var cor = S.corDaPessoa(p);
-    var setor = S.setorInfo(p.setor);
+    var setor = S.setorDaPessoa(p);
     var st = S.STATUS[p.status] || S.STATUS.disponivel;
     var mesaId = S.mesaDaPessoa(p.id);
     var onde = '';
@@ -193,9 +193,7 @@
         '<select id="f-status">' + opcoesStatus(p.status) + '</select></label>' +
         '<label class="cmp">Cargo / função' +
         '<input id="f-cargo" type="text" maxlength="24" value="' + esc(p.cargo || '') + '" ' +
-        'placeholder="ex.: Analista" /></label>' +
-        '<label class="cmp">Setor de ' + esc(p.nome.split(' ')[0]) +
-        '<select id="f-setor-pessoa">' + opcoesSetor(p.setor) + '</select></label>' : '') +
+        'placeholder="ex.: Analista" /></label>' : '') +
 
       '<label class="cmp">Observação' +
         '<input id="f-obs" type="text" maxlength="60" value="' + esc(meta.obs || '') + '" ' +
@@ -217,14 +215,6 @@
         return;
       }
       S.setMesa(alvo, { setor: this.value });
-    };
-    if ($('f-setor-pessoa')) $('f-setor-pessoa').onchange = function () {
-      if (this.value === NOVO) {
-        this.value = p.setor || '';
-        criarSetor(function (s) { S.setPessoa(p.id, { setor: s.id }); });
-        return;
-      }
-      S.setPessoa(p.id, { setor: this.value });
     };
     $('f-obs').oninput = digitando(function () { S.setMesa(mesaSelecionada, { obs: this.value }); });
     $('f-pessoa').onchange = function () {
@@ -257,7 +247,8 @@
         { id: 'nome', rotulo: 'Nome', tipo: 'text', valor: p.nome, maxlength: 34, obrigatorio: true },
         { id: 'cargo', rotulo: 'Cargo / função', tipo: 'text', valor: p.cargo || '',
           maxlength: 24, placeholder: 'ex.: Analista' },
-        { id: 'setor', rotulo: 'Setor', tipo: 'select', valor: p.setor || '', opcoes: setores },
+        { id: 'setor', rotulo: 'Setor de origem (usado enquanto estiver sem mesa)',
+          tipo: 'select', valor: p.setor || '', opcoes: setores },
         { id: 'status', rotulo: 'Situação', tipo: 'select', valor: p.status, opcoes: status }
       ],
       ok: 'Salvar'

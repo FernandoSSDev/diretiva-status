@@ -37,8 +37,30 @@
       (p.room.w / 100).toFixed(2).replace('.', ',') + ' × ' +
       (p.room.h / 100).toFixed(2).replace('.', ',') + ' m';
     montaAbas();
+    montaLegendaSetores();
     var sel = P.mesaSelecionada;
     if (sel && D.pisoDaMesa(sel) && D.pisoDaMesa(sel).id === id) P.selecionar(sel);
+  }
+
+  /* Legenda das áreas: só os setores que realmente aparecem neste ambiente. */
+  function montaLegendaSetores() {
+    var alvo = $('legenda-setores');
+    if (!alvo) return;
+    var piso = D.piso(pisoAtual);
+    var usados = [];
+    piso.mesas.forEach(function (m) {
+      var id = S.mesa(m.id).setor;
+      if (id && usados.indexOf(id) < 0) usados.push(id);
+    });
+
+    if (!usados.length) { alvo.hidden = true; alvo.innerHTML = ''; return; }
+    alvo.hidden = false;
+    alvo.innerHTML = '<span class="legenda-tit">Áreas neste piso:</span>' + usados.map(function (id) {
+      var s = S.setorInfo(id);
+      var n = piso.mesas.filter(function (m) { return S.mesa(m.id).setor === id; }).length;
+      return '<span><i style="background:' + s.cor + '"></i>' + s.nome +
+        ' <b>' + n + '</b></span>';
+    }).join('');
   }
 
   /* ------------------------------ barra ---------------------------------- */
@@ -208,7 +230,7 @@
     });
     global.PlantaDrag.ligaPan(palco);
 
-    S.onChange(montaAbas);
+    S.onChange(function () { montaAbas(); montaLegendaSetores(); });
 
     document.addEventListener('keydown', function (ev) {
       if (ev.target.matches && ev.target.matches('input, select, textarea')) return;
